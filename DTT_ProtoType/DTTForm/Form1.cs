@@ -74,7 +74,7 @@ namespace DTTForm
             string[] files = Directory.GetFiles(folderPath.Replace("\r", ""));
             try
             {
-                hashFile = File.ReadAllText(@"C:\Users\ahmeha\source\repos\DTT_ProtoType\HashChecking.txt");
+                hashFile = File.ReadAllText(@"..\..\..\HashChecking.txt");
             }
             catch (Exception e)
             {
@@ -159,7 +159,7 @@ namespace DTTForm
             string text = "";
             try
             {
-               text = File.ReadAllText(@"C:\Users\ahmeha\source\repos\DTT_ProtoType\SwTesting.txt");
+               text = File.ReadAllText(@"..\..\..\SwTesting.txt");
             }
             catch (Exception e)
             {
@@ -190,7 +190,7 @@ namespace DTTForm
 
         private void checkedListBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (checkedListBox1.Items.Clear(0))
+            //if (checkedListBox1.Items.Clear(0))
 
         }
     }
