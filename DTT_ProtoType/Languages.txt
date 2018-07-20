@@ -1,0 +1,3 @@
+English	M:\Host Production\Software\Motorola\MC55A0 OS Image\EN
+Chinese	M:\Host Production\Software\Motorola\MC55A0 OS Image\CN
+Japanese	M:\Host Production\Software\Motorola\MC55A0 OS Image\JP

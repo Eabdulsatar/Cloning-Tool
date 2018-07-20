@@ -1,0 +1,4 @@
+FullInstallation	M:\Host Production\Software\Full Installation\storage card
+FullInstallation-Canada	M:\Host Production\Software\Full Installation-Canada\storage card
+FullInstallation-HeskaVet	M:\Host Production\Software\Full Installation-HeskaVet\storage card
+FullInstallation-Vet	M:\Host Production\Software\Full Installation-Vet\storage card
