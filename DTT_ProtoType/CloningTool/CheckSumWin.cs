@@ -22,6 +22,7 @@ namespace CloningTool
             version.Text = "Version " + CT.Version;
 
         }
+        /*
         private void Browse_Click(object sender, EventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -40,6 +41,10 @@ namespace CloningTool
                 }
                 textBox1.Text = hashCode;
             }
+        }
+        */
+        private void Browse_Click(object sender, EventArgs e)
+        {
         }
     }
 }

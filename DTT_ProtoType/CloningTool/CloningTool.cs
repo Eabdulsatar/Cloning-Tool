@@ -20,10 +20,15 @@ namespace CloningTool
         private string swPath = "";
         private string langPath = "";
         private string keyPath = "";
+        private List<Drivers> Drives_List = new List<Drivers>();
+         
+
 
         public CloningTool()
         {
             InitializeComponent();
+
+            /*
             try
             {
                 string LF = File.ReadAllText(SwPackages, Encoding.UTF8);
@@ -45,35 +50,16 @@ namespace CloningTool
                 MessageBox.Show("Hashes file is missing", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Environment.Exit(0);
             }
-
+            */
             pictureBox1.Visible = false;
             refresh.Font = new Font("Wingdings 3", 12, FontStyle.Bold);
             refresh.Text = Char.ConvertFromUtf32(81); // or 80
             refresh.Width = 25;
             refresh.Height = 25;
-            copyBtn.Enabled = false;
-            label1.Visible = false;
-            label2.Visible = false;
-            label3.Visible = false;
-            label4.Visible = false;
-            label5.Visible = false;
-            label6.Visible = false;
-            label7.Visible = false;
-            label8.Visible = false;
-            label9.Visible = false;
-            label10.Visible = false;
-            pictureBox2.Visible = false;
-            pictureBox3.Visible = false;
-            pictureBox4.Visible = false;
-            pictureBox5.Visible = false;
-            pictureBox6.Visible = false;
-            pictureBox7.Visible = false;
-            pictureBox8.Visible = false;
-            pictureBox9.Visible = false;
-            pictureBox10.Visible = false;
-            pictureBox11.Visible = false;
+          //  copyBtn.Enabled = false;
+           
 
-            ItemNumRd.Checked = true; Drivers();
+            //ItemNumRd.Checked = true; Drivers_Function();
             version.Text = "Version " + Version;
         }
         private void SoftwareList_SelectedIndexChanged_1(object sender, EventArgs e)
@@ -81,10 +67,10 @@ namespace CloningTool
             completed.Visible = false;
             if (SoftwareList.SelectedIndex >= 0)
             {
-                HashReturn();
+              //  HashReturn();
             }
         }
-
+        /*
         public IEnumerable<string> HashReturn ()
         {
             Invoke((MethodInvoker)(delegate {
@@ -142,7 +128,7 @@ namespace CloningTool
             }
             return msg;
         }
-
+        */
         public IEnumerable<string> HashFiles(string folderPath)
         {
             var ext = new List<string> { ".htm", ".lnk", ".cab", ".CAB", ".sig", ".bmp", ".bin", ".lst", ".exe" };
@@ -157,7 +143,7 @@ namespace CloningTool
             {
                 foreach (string file in files)
                 {
-                    temp[i] = Hash(file).Replace("\r", "");
+                  //  temp[i] = Hash(file).Replace("\r", "");
                     i++;
                 }
             }
@@ -183,7 +169,7 @@ namespace CloningTool
                         FileHash.Text = "Failed!!";
 
                     }));
-                    copyBtn.Enabled = false;
+                   // copyBtn.Enabled = false;
                     break;
                 }
                 else
@@ -202,10 +188,10 @@ namespace CloningTool
         {
             DriversList.Items.Clear();
             SelectAll.Checked = false;
-            Drivers();
-            label1.Visible = false;
+            Drivers_Function();
+           
         }
-
+    
         private void SelectAll_CheckedChanged(object sender, EventArgs e)
         {
             if (SelectAll.Checked == true)
@@ -219,27 +205,45 @@ namespace CloningTool
 
         public struct Driverslist
         {
-            public DriveInfo drive;
+            public DriveInfo drive_information;
             public PictureBox image;
         }
-
-        public string Drivers()
+        
+        public string Drivers_Function()
         {
+
             int totalDrivers = DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Removable).Count();
-            Driverslist[] drivers = new Driverslist[totalDrivers];
+            Driverslist[] drivers_read_list = new Driverslist[totalDrivers];
             string driversName = "";
             int j = 0;
-            
+
             foreach (var value in DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Removable))
             {
-                Controls.Add(drivers[j].image);
-                drivers[j].drive = value;
+                Controls.Add(drivers_read_list[j].image);
+                drivers_read_list[j].drive_information = value;
                 DriversList.Text = value.Name;
                 driversName = DriversList.Text;
                 DriversList.Items.Add(value.Name);
                 j++;
             }
-            return driversName;
+
+
+            if (j > 0)
+            {
+                for (int i = 0; i < j; i++)
+                {
+                   // MessageBox.Show(j.ToString() + "\n" + i.ToString()+"\n"+ drivers_read_list[i].drive_information.Name);
+                    Drives_List.Add(new Drivers(drivers_read_list[i].drive_information.Name.ToString(), i, this));
+                }
+
+                    
+            }
+            
+
+
+
+
+            return (driversName);
         }
 
         public struct Elements
@@ -252,7 +256,7 @@ namespace CloningTool
             public int lengthOfData;
             public Elements[] data;
         }
-
+        /*
         public DataElements GettingElements(String SWfile)
         {
             var text = File.ReadAllText(SWfile);
@@ -293,177 +297,18 @@ namespace CloningTool
             return values;
         }
 
-
-        public IEnumerable<string> CopyingFun(string SourceFolder, string desti, DoWorkEventArgs e)
-        {
-            
-            var ext = new List<string> { ".htm", ".lnk", ".cab", ".CAB", ".sig", ".bmp", ".bin", ".lst", ".exe" };
-            var SWFiles = Directory.GetFiles(SourceFolder.Replace("\r", ""), "*.*", SearchOption.AllDirectories)
-                    .Where(s => ext.Contains(Path.GetExtension(s)));
-
-            int i = 0;
-            foreach (string file in SWFiles)
-            {
-                File.Copy(file, desti + Path.GetFileName(file), true);
-                backgroundWorker1.ReportProgress(i++);
-                if (backgroundWorker1.CancellationPending)
-                {
-                    e.Cancel = true;
-                    break;
-                }
-            }
-            return SWFiles;
-        }
-        private void BackgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
-        {
-            string SwSourceFolder = swPath;
-            string LangSourceFolder = langPath;
-            string KeySourceFolder = keyPath;
-            string dirName = new DirectoryInfo(LangSourceFolder).Name;
-            
-
-            foreach (string desti in DriversList.CheckedItems)
-            {
-                try
-                {
-                    Array.ForEach(Directory.GetFiles(desti),
-                                        delegate (string path) { File.Delete(path); });
-
-                    var swLength = CopyingFun(SwSourceFolder, desti, e);
-                    var langLength = CopyingFun(LangSourceFolder, desti, e);
-                    var totalLength = swLength.ToArray().Length + langLength.ToArray().Length;
-                    
-                    if (dirName == "CN")
-                    {
-                        var keyLength = CopyingFun(KeySourceFolder, desti, e);
-                        totalLength = totalLength + keyLength.ToArray().Length;
-                    }
-
-                    var destiHashes = HashFiles(desti);
-                    var sourceHashes = HashReturn();
-
-                    if (totalLength == destiHashes.ToArray().Length)
-                    {
-                        foreach (string str in destiHashes)
-                        {
-                            if (!sourceHashes.Contains(str))
-                            {
-                                FileHash.Invoke((MethodInvoker)(delegate
-                                {
-                                    FileHash.ForeColor = Color.Red;
-                                    FileHash.Text = "Second Hash Failed!!";
-                                }));
-                                break;
-                            }
-
-                            else
-                            {
-                                FileHash.Invoke((MethodInvoker)(delegate
-                                {
-                                    FileHash.Text = "Passed";
-                                }));
-                            }
-                        }
-                    }
-
-                    else
-                    {
-                        MessageBox.Show("Error while copying");
-                    }
-                    
-                    Invoke((MethodInvoker)(delegate
-                    {
-                        if (DriversList.CheckedItems[0].ToString() == desti)
-                        {
-                            label1.Text = "Copying to " + DriversList.CheckedItems[0].ToString() + " has been completed.";
-                            label1.Visible = true;
-                            pictureBox2.Visible = true;
-                        }
-                        else if (DriversList.CheckedItems[1].ToString() == desti)
-                        {
-                            label2.Text = "Copying to " + DriversList.CheckedItems[1].ToString() + " has been completed.";
-                            label2.Visible = true;
-                            pictureBox3.Visible = true;
-                        }
-                        else if (DriversList.CheckedItems[2].ToString() == desti)
-                        {
-                            label3.Text = "Copying to " + DriversList.CheckedItems[2].ToString() + " has been completed.";
-                            label3.Visible = true;
-                            pictureBox4.Visible = true;
-                        }
-                        else if (DriversList.CheckedItems[3].ToString() == desti)
-                        {
-                            label4.Text = "Copying to " + DriversList.CheckedItems[3].ToString() + " has been completed.";
-                            label4.Visible = true;
-                            pictureBox5.Visible = true;
-                        }
-                        else if (DriversList.CheckedItems[4].ToString() == desti)
-                        {
-                            label5.Text = "Copying to " + DriversList.CheckedItems[4].ToString() + " has been completed.";
-                            label5.Visible = true;
-                            pictureBox6.Visible = true;
-                        }
-                        else if (DriversList.CheckedItems[5].ToString() == desti)
-                        {
-                            label6.Text = "Copying to " + DriversList.CheckedItems[5].ToString() + " has been completed.";
-                            label6.Visible = true;
-                            pictureBox7.Visible = true;
-                        }
-                        else if (DriversList.CheckedItems[6].ToString() == desti)
-                        {
-                            label7.Text = "Copying to " + DriversList.CheckedItems[6].ToString() + " has been completed.";
-                            label7.Visible = true;
-                            pictureBox8.Visible = true;
-                        }
-                        else if (DriversList.CheckedItems[7].ToString() == desti)
-                        {
-                            label8.Text = "Copying to " + DriversList.CheckedItems[7].ToString() + " has been completed.";
-                            label8.Visible = true;
-                            pictureBox9.Visible = true;
-                        }
-                        else if (DriversList.CheckedItems[8].ToString() == desti)
-                        {
-                            label9.Text = "Copying to " + DriversList.CheckedItems[8].ToString() + " has been completed.";
-                            label9.Visible = true;
-                            pictureBox10.Visible = true;
-                        }
-                        else if (DriversList.CheckedItems[9].ToString() == desti)
-                        {
-                            label10.Text = "Copying to " + DriversList.CheckedItems[9].ToString() + " has been completed.";
-                            label10.Visible = true;
-                            pictureBox11.Visible = true;
-                        }
-
-                    }));
-                    
-                }
-
-                catch (IOException)
-                {
-                    MessageBox.Show("The Drive " + desti + " is not connected!\nPlease press refresh.");
-                    Invoke((MethodInvoker)(delegate
-                    {
-                        pictureBox1.Visible = false;
-                        completed.Visible = false;
-                    }));
-                    e.Cancel = true;
-                }
-            }
-        }
-
-        private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        {
-            pictureBox1.Visible = true;
-
-        }
-
+       */
+        
+        
+        /*
         public void CopyBtn_Click(object sender, EventArgs e)
         {
             pictureBox1.Visible = true;
             if (!backgroundWorker1.IsBusy)
                  backgroundWorker1.RunWorkerAsync();
         }
-
+        */
+        /*
         private void button1_Click(object sender, EventArgs e)
         {
             foreach (string desti in DriversList.CheckedItems)
@@ -479,18 +324,21 @@ namespace CloningTool
                 }
             } 
         }
-
+        */
+        /*
         private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             pictureBox1.Visible = false;
         }
-        
+        */
+        /*
         private void button2_Click_1(object sender, EventArgs e)
         {
             CheckSumWin check = new CheckSumWin();
             check.Show();
         }
-
+        */
+        /*
         private void ItemNumRd_CheckedChanged(object sender, EventArgs e)
         {
             if (ItemNumRd.Checked)
@@ -514,6 +362,18 @@ namespace CloningTool
                 }
             }
         }
+        */
+        private void copyBtn_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("step1");
+            string[] folders = new string[4] { @"C:\testsf", @"C:\testsf2", @"C:\testsf3", @"C:\Full Installation\storage card" };  
+
+        Drives_List[0].Copy_Files_Multiple_Sources(folders,Drives_List[0].Drive_Name);
+           // Drives_List[0].Copy_File(@"C:\testsf", Drives_List[0].Drive_Name);
+
+        }
+
+       
     }
     }
 
