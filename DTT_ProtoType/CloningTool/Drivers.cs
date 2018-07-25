@@ -9,13 +9,13 @@ using System.Windows.Forms;
 using System.IO;
 using System.Drawing;
 
-
 namespace CloningTool
 {
-    class Drivers
+    class Drivers : IDisposable
     {
 
         const int X_Location = 131;
+        const int X_Location_status = 68;
         const int Y_Location = 180;
         const int Y_Multiplier_Value=15;
         const int Icon_Size = 13;
@@ -23,38 +23,83 @@ namespace CloningTool
         private BackgroundWorker Drive_Worker;
         public string Drive_Name;
         private int Drive_Order;
-        PictureBox Loading_pic;
-        PictureBox Complete_pic;
-        PictureBox Error_pic;
-
-
-        public string Version = "1.0";
-        private string SwPackages = @"SwPackages.ini";
         private string HashesFile = @"Hashes.ini";
-        private string swPath = "";
-        private string langPath = "";
-        private string keyPath = "";
-        private string [] Source_Folders;
         CloningTool Main_Form;
         CheckSumTools CheckSumTools;
 
 
+        private PictureBox Loading_pic = new PictureBox
+        {
+            Name = "Loading_Icon",
+            Size = new Size(Icon_Size, Icon_Size),
+            Image = Image.FromFile("Loading.gif"),
+            SizeMode = PictureBoxSizeMode.StretchImage,
+            BackgroundImageLayout = ImageLayout.None,
+            BackColor = Color.Transparent,
+            Visible = false,
+        };
+        private PictureBox Complete_pic = new PictureBox
+        {
+            Name = "Check_Icon",
+            Size = new Size(Icon_Size, Icon_Size),
+            Image = Image.FromFile("Check.ico"),
+            SizeMode = PictureBoxSizeMode.StretchImage,
+            BackgroundImageLayout = ImageLayout.None,
+            BackColor = Color.Transparent,
+            Visible = false,
+        };
 
+        private PictureBox Error_pic = new PictureBox
+        {
+            Name = "Error_Icon",
+            Size = new Size(Icon_Size, Icon_Size),
+            Image = Image.FromFile("Error.png"),
+            SizeMode = PictureBoxSizeMode.StretchImage,
+            BackgroundImageLayout = ImageLayout.None,
+            BackColor = Color.Transparent,
+            Visible = false,
+        };
 
-
-       
-
-
-
-
-
-
-       struct Copy_Struct
+        private Label Loading_Status = new Label
+        {
+            AutoSize = true,
+            Name = "Loading_Status",
+            Size = new Size(35, 13),
+            TabIndex = 1,
+            BackColor = Color.Transparent,
+            Visible = true,
+        };
+        
+        struct Copy_Struct
         {
             public string [] Source_Folders;
             public string Destination_Folder;
+            public bool Is_Format;
+         
 
         }
+
+        enum Message_Status : int 
+        {
+            IDEL=0,
+            FORMATTING=1,
+            COPYING=2,
+            COMPLETE=3,
+            ERROR_FORMATTING=4,
+            ERROR_HASHING=5,
+            ERROR_MISSING_DRIVE=6,
+            ERROR_CORRUPTED=7
+        }
+
+        enum Image_Control_Message : int
+        {
+            IDEL,
+            FORMATTING,
+            COPYING,
+            ERROR,
+            COMPLETE,
+        }
+        private int MessageStatus;
 
 
         public Drivers (string drive_name, int drive_order, CloningTool Parent)
@@ -62,48 +107,18 @@ namespace CloningTool
             Drive_Worker = new BackgroundWorker();
             Drive_Name = drive_name;
             Drive_Order = drive_order;
-           // Source_Folders = SourceFolders;
             Main_Form = Parent;
-
-            PictureBox Loading_pic = new PictureBox
-            {
-                Name = "Loading_Icon",
-                Size = new Size(Icon_Size, Icon_Size),
-                Location = new Point(X_Location, Y_Location + drive_order * Y_Multiplier_Value),
-                Image = Image.FromFile("Loading.gif"),
-                SizeMode = PictureBoxSizeMode.StretchImage,
-                BackgroundImageLayout = ImageLayout.None,
-                BackColor = Color.Transparent,
-            }; 
-
-            PictureBox Complete_pic = new PictureBox
-            {
-                Name = "Check_Icon",
-                Size = new Size(Icon_Size, Icon_Size),
-                Location = new Point(X_Location, Y_Location + drive_order * Y_Multiplier_Value),
-                Image = Image.FromFile("Check.ico"),
-                SizeMode = PictureBoxSizeMode.StretchImage,
-                BackgroundImageLayout = ImageLayout.None,
-                BackColor = Color.Transparent,
-            };
-
-            PictureBox Error_pic = new PictureBox
-            {
-                Name = "Error_Icon",
-                Size = new Size(Icon_Size, Icon_Size),
-                Location = new Point(X_Location, Y_Location + drive_order * Y_Multiplier_Value),
-                Image = Image.FromFile("Error.png"),
-                SizeMode = PictureBoxSizeMode.StretchImage,
-                BackgroundImageLayout = ImageLayout.None,
-                BackColor = Color.Transparent,
-            };
+            Loading_Status.Location = new Point(X_Location_status, Y_Location + drive_order * Y_Multiplier_Value);
+            Complete_pic.Location = new Point(X_Location, Y_Location + drive_order * Y_Multiplier_Value);
+            Error_pic.Location = new Point(X_Location, Y_Location + drive_order * Y_Multiplier_Value);
+            Loading_pic.Location = new Point(X_Location, Y_Location + drive_order * Y_Multiplier_Value);
 
             Main_Form.Controls.Add(Loading_pic);
             Main_Form.Controls.Add(Complete_pic);
             Main_Form.Controls.Add(Error_pic);
+            Main_Form.Controls.Add(Loading_Status);
 
             CheckSumTools = new CheckSumTools(HashesFile);
-
 
             this.Drive_Worker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.Drive_Worker_DoWork);
             this.Drive_Worker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.Drive_Worker_ProgressChanged);
@@ -111,53 +126,42 @@ namespace CloningTool
             Drive_Worker.WorkerReportsProgress = true;
 
         }
+       
 
-
-
-
-
-
-        /*
-        public void Copy_File(string Source_Folder, string Destination_Folder)
-        {
-            MessageBox.Show("step2");
-            Copy_Struct Copy_Struct_Data;
-            Copy_Struct_Data.Source_Folder = Source_Folder;
-            Copy_Struct_Data.Destination_Folder = Destination_Folder;
-            MessageBox.Show(Drive_Worker.IsBusy.ToString());
-            if (!Drive_Worker.IsBusy) Drive_Worker.RunWorkerAsync(Copy_Struct_Data);
-        }
-        */
-
-        public void Copy_Files_Multiple_Sources(string [] Source_Folders, string Destination_Folder)
+        public void Copy_Files_Multiple_Sources(string [] Source_Folders)
         {
             Copy_Struct Copy_Struct_Data;
             Copy_Struct_Data.Source_Folders = Source_Folders;
-            Copy_Struct_Data.Destination_Folder = Destination_Folder;
+            Copy_Struct_Data.Destination_Folder = Drive_Name;
+            Copy_Struct_Data.Is_Format = false;
             if (!Drive_Worker.IsBusy) Drive_Worker.RunWorkerAsync(Copy_Struct_Data);
         }
 
-        public bool Copy_Status()
+        public void Format_MyDrive()
         {
-            bool Copy_Status = false;
-
-            return (Copy_Status);
+            Copy_Struct Copy_Struct_Data;
+            Copy_Struct_Data.Source_Folders = null;
+            Copy_Struct_Data.Destination_Folder = null ;
+            Copy_Struct_Data.Is_Format = true;
+            if (!Drive_Worker.IsBusy) Drive_Worker.RunWorkerAsync(Copy_Struct_Data);
         }
-
-
-
-
-
-
-
-
-
+        
         private bool Format_Drive(string Drive)
         {
-            return (FMT_DRV(Drive.Replace(@"\",""), "FAT32", true, 8192, "", false));
+            Drive_Worker.ReportProgress(0, Message_Status.FORMATTING);
+            if (FMT_DRV(Drive.Replace(@"\", ""), "FAT32", true, 8192, "", false))
+            {
+                Drive_Worker.ReportProgress(0, Message_Status.COMPLETE);
+                return (true);
+            }
+            else
+            {
+                Drive_Worker.ReportProgress(0, Message_Status.ERROR_FORMATTING);
+                return (false);
+            }
         }
-
-        public bool FMT_DRV(string driveLetter, string fileSystem = "FAT32", bool quickFormat = true,
+      
+        private bool FMT_DRV(string driveLetter, string fileSystem = "FAT32", bool quickFormat = true,
                                     int clusterSize = 4096, string label = "", bool enableCompression = false)
         {
             
@@ -177,8 +181,11 @@ namespace CloningTool
                 {
                     File.Delete(item);
                 }
-                catch (UnauthorizedAccessException) { }
-                catch (IOException) { }
+                catch (UnauthorizedAccessException) { return false; }
+                catch (IOException e) {
+                    //MessageBox.Show(e.ToString());
+                    return false;
+                    break; }
             }
             foreach (var item in directories)
             {
@@ -186,8 +193,12 @@ namespace CloningTool
                 {
                     Directory.Delete(item);
                 }
-                catch (UnauthorizedAccessException) { }
-                catch (IOException) { }
+                catch (UnauthorizedAccessException) { return false; }
+                catch (IOException e)
+                {
+                    //MessageBox.Show(e.ToString());
+                    return false;
+                    break; }
             }
             ManagementObjectSearcher searcher = new ManagementObjectSearcher(@"select * from Win32_Volume WHERE DriveLetter = '" + driveLetter + "'");
             foreach (ManagementObject vi in searcher.Get())
@@ -211,132 +222,205 @@ namespace CloningTool
 
                     vi.InvokeMethod(watcher, "Format", new object[] { fileSystem, quickFormat, clusterSize, label, enableCompression });
 
-                    while (!completed) { System.Threading.Thread.Sleep(1000); }
-
-
+                    while (!completed)
+                    { /*System.Threading.Thread.Sleep(1000);*/
+                       
+                    }
                 }
                 catch
                 {
+                    return false;
 
                 }
             }
-
             return true;
         }
-
-
 
 
         private void Copying_Function(string [] SourceFolders, string Destination)
         {
             var File_Extentions = new List<string> { ".htm", ".lnk", ".cab", ".CAB", ".sig", ".bmp", ".bin", ".lst", ".exe" };
             IEnumerable<string> SWFiles;
+            Drive_Worker.ReportProgress(0, Message_Status.COPYING);
+            bool errorStatus_temp = true;
 
-            foreach(string SourceFolder in SourceFolders)
+            foreach (string SourceFolder in SourceFolders)
             {
-                //MessageBox.Show(SourceFolder);
                 SWFiles = Directory.GetFiles(SourceFolder.Replace("\r", ""), "*.*", SearchOption.AllDirectories)
                                     .Where(s => File_Extentions.Contains(Path.GetExtension(s)));
 
                 string[] Destination_Files = new string[SWFiles.Count()];
                 string[] Source_Files = new string[SWFiles.Count()];
 
-
-
-                int i = 0;
                 int j = 0;
-               
                 foreach (string File_Path in SWFiles)
                 {
-                    MessageBox.Show("file to copy\n" + File_Path);
-                    if (true/*CheckSumTools.Check_Valid_CheckSum(File_Path)*/)
+                    if (CheckSumTools.Check_Valid_CheckSum(File_Path))
                     {
                         File.Copy(File_Path, Destination + Path.GetFileName(File_Path), true);
 
                         Destination_Files[j] = Destination + Path.GetFileName(File_Path);
                         Source_Files[j] = File_Path;
-
-                        Drive_Worker.ReportProgress(i++);
                     }
                     else
                     {
-                        MessageBox.Show("Error Wrong File in list");
-
+                        Drive_Worker.ReportProgress(0, Message_Status.ERROR_HASHING);
+                    errorStatus_temp = false;
                         break;
                     }
 
                     if (Drive_Worker.CancellationPending)
                     {
-
+                    errorStatus_temp = false;
                         break;
                     }
+
                     j++;
                 }
+                
                 if (!CheckSumTools.Check_Valid_CheckSum_Folders(Destination_Files, Source_Files))
                 {
-                    MessageBox.Show("Error Cpying");
-
+                    Drive_Worker.ReportProgress(0, Message_Status.ERROR_CORRUPTED);
+                    errorStatus_temp = false;
                     break;
                 }
+                
             }
 
+            if (!errorStatus_temp == false)  Drive_Worker.ReportProgress(0, Message_Status.COMPLETE);
             
-
         }
-
-
-       
-
-
-
 
 
         private void Drive_Worker_DoWork(object sender, DoWorkEventArgs e)
         {
+            Drive_Worker.ReportProgress(0, Message_Status.IDEL);
             try
-            {
-                MessageBox.Show("step3");
-                Format_Drive(Drive_Name);
-                
+           {
                 if (Format_Drive(Drive_Name))
                 {
-                    MessageBox.Show("step4");
-                    Copying_Function(((Copy_Struct)e.Argument).Source_Folders, ((Copy_Struct)e.Argument).Destination_Folder);
+                    if (!((Copy_Struct)e.Argument).Is_Format)
+                    {
+                        Copying_Function(((Copy_Struct)e.Argument).Source_Folders, ((Copy_Struct)e.Argument).Destination_Folder);
+                    }
                 }
                 else
-                { 
-                    MessageBox.Show("Error Formatting Drive");
+                {
+                    Drive_Worker.ReportProgress(0, Message_Status.ERROR_FORMATTING);
                 }
-                
             }
 
             catch (IOException)
             {
-                MessageBox.Show("The Drive " + Drive_Name + " is not connected!\nPlease press refresh.");  
+                Drive_Worker.ReportProgress(0, Message_Status.ERROR_MISSING_DRIVE);
                 e.Cancel = true;
             }
-            
         }
 
 
         private void Drive_Worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-            MessageBox.Show("stepprogress changed");
+            MessageStatus = (int)e.UserState;
+            switch (e.UserState)
+            {
+                case Message_Status.IDEL:
+                    Image_Control(Image_Control_Message.IDEL);
+                    break;
+                case Message_Status.FORMATTING:
+                    Image_Control(Image_Control_Message.FORMATTING);
+                    break;
+                case Message_Status.COPYING:
+                    Image_Control(Image_Control_Message.COPYING);
+                    break;
+                case Message_Status.COMPLETE:
+                    Image_Control(Image_Control_Message.COMPLETE);
+                    break;
+                case Message_Status.ERROR_FORMATTING:
+                   // MessageBox.Show("Error Formatting Drive", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Image_Control(Image_Control_Message.ERROR);
+                    break;
+                case Message_Status.ERROR_MISSING_DRIVE:
+                    //MessageBox.Show(ErrorMsg);
+                    Image_Control(Image_Control_Message.ERROR);
+                    break;
+                case Message_Status.ERROR_HASHING:
+                    //MessageBox.Show("Please update the Hashes file.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Image_Control(Image_Control_Message.ERROR);
+                    break;
+                case Message_Status.ERROR_CORRUPTED:
+                   // MessageBox.Show("Please check the SD card connection.\nFiles was not being copied properly. ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Image_Control(Image_Control_Message.ERROR);
+                    break;
+            }
         }
 
         private void Drive_Worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            MessageBox.Show("Drive_Worker_RunWorkerCompleted");
 
         }
 
-
-        public void  Dispose_Worker()
+        public void Dispose()
         {
             Drive_Worker.Dispose();
+            Loading_pic.Dispose();
+            Complete_pic.Dispose();
+            Error_pic.Dispose();
+            Loading_Status.Dispose();
+            CheckSumTools.Dispose();
         }
 
 
+        private void Image_Control(Image_Control_Message message)
+        {
+            switch (message)
+            {
+                case Image_Control_Message.IDEL:
+                    Loading_pic.Visible = false;
+                    Complete_pic.Visible = false;
+                    Error_pic.Visible = false;
+                break;
 
+                case Image_Control_Message.FORMATTING://loading
+                    Loading_Status.Text = "Formatting...";
+                    Loading_pic.Visible = true;
+                    Complete_pic.Visible = false;
+                    Error_pic.Visible = false;
+                    break;
+
+                case Image_Control_Message.COPYING://loading
+                    Loading_Status.Text = "Copying...";
+                    Loading_Status.Visible = true;
+                    Loading_pic.Visible = true;
+                    Complete_pic.Visible = false;
+                    Error_pic.Visible = false;
+                    break;
+
+                case Image_Control_Message.COMPLETE://complete
+                    Loading_Status.Text = "Completed";
+                    Loading_Status.Visible = true;
+                    Loading_pic.Visible = false;
+                    Complete_pic.Visible = true;
+                    Error_pic.Visible = false;
+                    break;
+
+                case Image_Control_Message.ERROR://error
+                    Loading_Status.Visible = false;
+                    Loading_pic.Visible = false;
+                    Complete_pic.Visible = false;
+                    Error_pic.Visible = true;
+                    break;
+
+            }
+        }
+
+        public int Worker_Status()
+        {
+            return (MessageStatus);
+        }
+
+        public bool Worker_IsBusy()
+        {
+            return (Drive_Worker.IsBusy);
+        }
     }
 }

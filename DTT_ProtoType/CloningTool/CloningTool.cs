@@ -17,18 +17,43 @@ namespace CloningTool
         public string Version = "1.0";
         private string SwPackages = @"SwPackages.ini";
         private string HashesFile = @"Hashes.ini";
-        private string swPath = "";
-        private string langPath = "";
-        private string keyPath = "";
         private List<Drivers> Drives_List = new List<Drivers>();
-         
+        private string[] FoldersPath;
+        public string FromDrivers = "";
+        public struct Elements
+        {
+            public string ItemNum, SMN, Desc, path;
+        }
+        public struct DataElements
+        {
+            public int lengthOfData;
+            public Elements[] data;
+        }
+
+        private struct Unique_elements
+        {
+            public string[] folders;
+            public string Item_Number, SMN_Number, Description;
+        }
+
+
+        enum Message_Status : int
+        {
+            IDEL = 0,
+            FORMATTING = 1,
+            COPYING = 2,
+            COMPLETE = 3,
+            ERROR_FORMATTING = 4,
+            ERROR_HASHING = 5,
+            ERROR_MISSING_DRIVE = 6,
+            ERROR_CORRUPTED = 7
+        }
+
 
 
         public CloningTool()
         {
             InitializeComponent();
-
-            /*
             try
             {
                 string LF = File.ReadAllText(SwPackages, Encoding.UTF8);
@@ -50,148 +75,131 @@ namespace CloningTool
                 MessageBox.Show("Hashes file is missing", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Environment.Exit(0);
             }
-            */
-            pictureBox1.Visible = false;
-            refresh.Font = new Font("Wingdings 3", 12, FontStyle.Bold);
-            refresh.Text = Char.ConvertFromUtf32(81); // or 80
-            refresh.Width = 25;
-            refresh.Height = 25;
-          //  copyBtn.Enabled = false;
-           
 
-            //ItemNumRd.Checked = true; Drivers_Function();
             version.Text = "Version " + Version;
         }
+
+        private void Displaying_Msgs(string[] msgs)
+        {
+            string toDisplay = string.Join(Environment.NewLine, msgs);
+            MessageBox.Show(toDisplay);
+        }
+
+
         private void SoftwareList_SelectedIndexChanged_1(object sender, EventArgs e)
         {
-            completed.Visible = false;
+            Unique_elements element;
+
             if (SoftwareList.SelectedIndex >= 0)
             {
-              //  HashReturn();
+                element = GetDataElements_FromSelection(SoftwareList.SelectedItem.ToString(), SMNRd.Checked);
+
+                DescSW.Text = element.Description + "\n" + "SMN: " + element.SMN_Number
+                   + "\n" + "Item Number: " + element.Item_Number;
+                FoldersPath = element.folders;
             }
         }
-        /*
-        public IEnumerable<string> HashReturn ()
+
+        public DataElements GettingElements(String SWfile)
         {
-            Invoke((MethodInvoker)(delegate {
-                if (ItemNumRd.Checked==true)
-                {
-                    DescSW.Text = GettingElements(SwPackages).data[SoftwareList.SelectedIndex].Desc
-                + "\n" + "SMN: " + GettingElements(SwPackages).data[SoftwareList.SelectedIndex].SMN;
-                }
-                else if (SMNRd.Checked==true)
-                {
-                    DescSW.Text = GettingElements(SwPackages).data[SoftwareList.SelectedIndex].Desc
-                + "\n" + "Item Number: " + GettingElements(SwPackages).data[SoftwareList.SelectedIndex].ItemNum;
-                }
-                
+            var text = File.ReadAllText(SWfile);
+            string[] enter = text.Split('\n');
+            int number_of_elements = enter.Length;
+            DataElements values = new DataElements();
+            values.lengthOfData = number_of_elements;
+            values.data = new Elements[values.lengthOfData];
 
-                swPath = GettingElements(SwPackages).data[SoftwareList.SelectedIndex].SwPath;
-
-                langPath = GettingElements(SwPackages).data[SoftwareList.SelectedIndex].LangPath;
-
-            }));
-
-            IEnumerable<string> total = null;
-            this.Invoke((MethodInvoker)delegate ()
+            for (int i = 0; i < values.lengthOfData; i++)
             {
-                var swHashes = HashFiles(GettingElements(SwPackages).data[SoftwareList.SelectedIndex].SwPath);
-                var langHashes = HashFiles(GettingElements(SwPackages).data[SoftwareList.SelectedIndex].LangPath);
-                total = swHashes.Concat(langHashes);
-                if (GettingElements(SwPackages).data[SoftwareList.SelectedIndex].Language == "CN")
+                string[] element = enter[i].Split('\t');
+                values.data[i].ItemNum = element[0];
+                values.data[i].SMN = element[1];
+                values.data[i].Desc = element[2];
+                values.data[i].path = element[3];
+
+
+                if (string.IsNullOrEmpty(values.data[i].ItemNum)
+                    || string.IsNullOrEmpty(values.data[i].SMN)
+                    || string.IsNullOrEmpty(values.data[i].Desc)
+                    || string.IsNullOrEmpty(values.data[i].path))
                 {
-                    keyPath= GettingElements(SwPackages).data[SoftwareList.SelectedIndex].KeyPath;
-                    var keyHashes = HashFiles(GettingElements(SwPackages).data[SoftwareList.SelectedIndex].KeyPath);
-                    total = total.Concat(keyHashes);
+                    MessageBox.Show("Missing content in SwFile", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Environment.Exit(0);
                 }
-                if (FileHash.Text == "Passed")
-                {
-                    copyBtn.Enabled = true;
-                }
-            });
-            
-            return total;
+            }
+            return values;
         }
 
-        public string Hash(string filename)
+        private string[] Remove_Dupicate(bool Is_SMN)
         {
-            FileInfo fi = new FileInfo(filename);
-            FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
-            BinaryReader readBin = new BinaryReader(fs);
-            byte[] data = readBin.ReadBytes((int)fi.Length);
-            SHA1 sha1 = new SHA1CryptoServiceProvider();
-            byte[] result = sha1.ComputeHash(data);
-            string msg = "";
-            foreach (byte d in result)
+            string[] temp = new string[GettingElements(SwPackages).lengthOfData];
+
+            if (Is_SMN)
             {
-                msg = msg + d.ToString("x");
+                for (int i = 0; i < GettingElements(SwPackages).lengthOfData; i++)
+                {
+                    temp[i] = GettingElements(SwPackages).data[i].SMN;
+                }
+                return temp.Distinct().ToArray();
             }
-            return msg;
+            else
+            {
+                for (int i = 0; i < GettingElements(SwPackages).lengthOfData; i++)
+                {
+                    temp[i] = GettingElements(SwPackages).data[i].ItemNum;
+                }
+                return temp.Distinct().ToArray();
+            }
         }
-        */
-        public IEnumerable<string> HashFiles(string folderPath)
+
+        private Unique_elements GetDataElements_FromSelection(string data, bool Is_SMN)
         {
-            var ext = new List<string> { ".htm", ".lnk", ".cab", ".CAB", ".sig", ".bmp", ".bin", ".lst", ".exe" };
-            var files = Directory.GetFiles(folderPath.Replace("\r", ""), "*.*", SearchOption.AllDirectories)
-                    .Where(s => ext.Contains(Path.GetExtension(s)));
-            string hashFile = File.ReadAllText(HashesFile);
-            string[] hashCode = hashFile.Split('\n');
-            string[] temp = new string[files.ToArray().Length];
-            int i = 0;
+            List<string> temp = new List<string>();
+            Unique_elements items = new Unique_elements();
 
-            while (i < files.ToArray().Length)
+            for (int i = 0; i < GettingElements(SwPackages).lengthOfData; i++)
             {
-                foreach (string file in files)
+                if (Is_SMN)
                 {
-                  //  temp[i] = Hash(file).Replace("\r", "");
-                    i++;
-                }
-            }
-
-            string[] hashTemp = new string[hashCode.Length];
-            int j = 0;
-
-            while (j < hashCode.Length)
-            {
-                foreach (string hash in hashCode)
-                {
-                    hashTemp[j] = hash.Replace("\r", "");
-                    j++;
-                }
-            }
-
-            foreach (string str in temp)
-            {
-                if (!hashTemp.Contains(str))
-                {
-                    FileHash.Invoke((MethodInvoker)(delegate {
-                        FileHash.ForeColor = Color.Red;
-                        FileHash.Text = "Failed!!";
-
-                    }));
-                   // copyBtn.Enabled = false;
-                    break;
+                    if (data == GettingElements(SwPackages).data[i].SMN)
+                    {
+                        items.Description = GettingElements(SwPackages).data[i].Desc;
+                        items.SMN_Number = GettingElements(SwPackages).data[i].SMN;
+                        items.Item_Number = GettingElements(SwPackages).data[i].ItemNum;
+                        temp.Add(GettingElements(SwPackages).data[i].path);
+                    }
                 }
                 else
                 {
-                    FileHash.Invoke((MethodInvoker)(delegate {
-                        FileHash.ForeColor = Color.Black;
-                        FileHash.Text = "Passed";
-                    }));
-                    
+                    if (data == GettingElements(SwPackages).data[i].ItemNum)
+                    {
+                        items.Description = GettingElements(SwPackages).data[i].Desc;
+                        items.SMN_Number = GettingElements(SwPackages).data[i].SMN;
+                        items.Item_Number = GettingElements(SwPackages).data[i].ItemNum;
+                        temp.Add(GettingElements(SwPackages).data[i].path);
+                    }
                 }
+                items.folders = temp.ToArray();
+
             }
-            return temp;
+            return items;
+
         }
-       
-        private void Refresh_Click(object sender, EventArgs e)
+
+        private void RefreshBtn_Click(object sender, EventArgs e)
         {
+            for (int i = 0; i < Drives_List.Count; i++)
+            {
+                Drives_List[i].Dispose();
+
+            }
+            Drives_List.Clear();
             DriversList.Items.Clear();
             SelectAll.Checked = false;
             Drivers_Function();
-           
+
         }
-    
+
         private void SelectAll_CheckedChanged(object sender, EventArgs e)
         {
             if (SelectAll.Checked == true)
@@ -208,7 +216,7 @@ namespace CloningTool
             public DriveInfo drive_information;
             public PictureBox image;
         }
-        
+
         public string Drivers_Function()
         {
 
@@ -227,153 +235,144 @@ namespace CloningTool
                 j++;
             }
 
-
             if (j > 0)
             {
                 for (int i = 0; i < j; i++)
                 {
-                   // MessageBox.Show(j.ToString() + "\n" + i.ToString()+"\n"+ drivers_read_list[i].drive_information.Name);
+
                     Drives_List.Add(new Drivers(drivers_read_list[i].drive_information.Name.ToString(), i, this));
                 }
-
-                    
             }
-            
-
-
-
 
             return (driversName);
         }
-
-        public struct Elements
+        private void CopyBtn_Click(object sender, EventArgs e)
         {
-            public string ItemNum, SMN, Desc, SwPackage, SwPath, Language, LangPath, Keyboard, KeyPath;
-        }
+            var items = DriversList.CheckedItems.OfType<string>().ToArray();
 
-        public struct DataElements
-        {
-            public int lengthOfData;
-            public Elements[] data;
-        }
-        /*
-        public DataElements GettingElements(String SWfile)
-        {
-            var text = File.ReadAllText(SWfile);
-            string[] enter = text.Split('\n');
-            int number_of_elements = enter.Length;
-            DataElements values = new DataElements();
-            values.lengthOfData = number_of_elements;
-            values.data = new Elements[values.lengthOfData];
+            string selected = this.SoftwareList.GetItemText(this.SoftwareList.SelectedItem);
 
-            for (int i = 0; i < values.lengthOfData; i++)
+            if (FoldersPath == null)
             {
-                string[] element = enter[i].Split('\t');
-                values.data[i].ItemNum = element[0];
-                values.data[i].SMN = element[1];
-                values.data[i].Desc = element[2];
-                values.data[i].SwPackage = element[3];
-                values.data[i].SwPath = element[4];
-                values.data[i].Language = element[5];
-                values.data[i].LangPath = element[6];
-                values.data[i].Keyboard = element[7];
-                values.data[i].KeyPath = element[8];
-
-
-                if (string.IsNullOrEmpty(values.data[i].ItemNum)
-                    || string.IsNullOrEmpty(values.data[i].SMN)
-                    || string.IsNullOrEmpty(values.data[i].Desc)
-                    || string.IsNullOrEmpty(values.data[i].SwPackage)
-                    || string.IsNullOrEmpty(values.data[i].SwPath)
-                    || string.IsNullOrEmpty(values.data[i].Language)
-                    || string.IsNullOrEmpty(values.data[i].LangPath)
-                    || string.IsNullOrEmpty(values.data[i].Keyboard)
-                    || string.IsNullOrEmpty(values.data[i].KeyPath))
-                {
-                    MessageBox.Show("Missing content in SwFile", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    Environment.Exit(0);
-                }
+                MessageBox.Show("Please select an Item number or SMN number", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            return values;
+            else
+            {
+                RefreshBtn.Enabled = false;
+                copyBtn.Enabled = false;
+                EraseBtn.Enabled = false;
+
+                for (int i = 0; i < DriversList.CheckedItems.Count; i++)
+                {
+                    for (int j = 0; j < Drives_List.Count; j++)
+                    {
+                        if (items[i] == Drives_List[j].Drive_Name)
+                        {
+
+                            Drives_List[j].Copy_Files_Multiple_Sources(FoldersPath);
+
+                        }
+                    }
+                }
+                MainWorker.RunWorkerAsync();
+            }
         }
 
-       */
-        
-        
-        /*
-        public void CopyBtn_Click(object sender, EventArgs e)
+        private void CloningTool_Load(object sender, EventArgs e)
         {
-            pictureBox1.Visible = true;
-            if (!backgroundWorker1.IsBusy)
-                 backgroundWorker1.RunWorkerAsync();
+            RefreshBtn.PerformClick();
+            ItemNumRd.Checked = true;
         }
-        */
-        /*
-        private void button1_Click(object sender, EventArgs e)
-        {
-            foreach (string desti in DriversList.CheckedItems)
-            {
-                try
-                {
-                    Array.ForEach(Directory.GetFiles(desti),
-                                                       delegate (string path) { File.Delete(path); });
-                }
-                catch (IOException)
-                {
-                    MessageBox.Show("The Drive " + desti + " is not connected!\nPlease press refresh.");
-                }
-            } 
-        }
-        */
-        /*
-        private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            pictureBox1.Visible = false;
-        }
-        */
-        /*
-        private void button2_Click_1(object sender, EventArgs e)
-        {
-            CheckSumWin check = new CheckSumWin();
-            check.Show();
-        }
-        */
-        /*
+
         private void ItemNumRd_CheckedChanged(object sender, EventArgs e)
         {
             if (ItemNumRd.Checked)
             {
-                for (int i = 0; i < GettingElements(SwPackages).lengthOfData; i++)
-                {
-                    SoftwareList.Items.Remove(GettingElements(SwPackages).data[i].SMN);
-                    SoftwareList.Items.Add(GettingElements(SwPackages).data[i].ItemNum);
-                }
+                SoftwareList.Items.Clear();
+                SoftwareList.Items.AddRange(Remove_Dupicate(false));
             }
         }
-        
+
         private void SMNRd_CheckedChanged(object sender, EventArgs e)
         {
             if (SMNRd.Checked)
             {
-                for (int i = 0; i < GettingElements(SwPackages).lengthOfData; i++)
+                SoftwareList.Items.Clear();
+                SoftwareList.Items.AddRange(Remove_Dupicate(true));
+            }
+        }
+
+        private void CheckSum_Btn_Click(object sender, EventArgs e)
+        {
+            CheckSumWin check = new CheckSumWin();
+            check.Show();
+        }
+
+        private void EraseBtn_Click(object sender, EventArgs e)
+        {
+            RefreshBtn.Enabled = false;
+            copyBtn.Enabled = false;
+            EraseBtn.Enabled = false;
+
+            var items = DriversList.CheckedItems.OfType<string>().ToArray();
+
+            string selected = this.SoftwareList.GetItemText(this.SoftwareList.SelectedItem);
+
+            for (int i = 0; i < DriversList.CheckedItems.Count; i++)
+            {
+                for (int j = 0; j < Drives_List.Count; j++)
                 {
-                    SoftwareList.Items.Remove(GettingElements(SwPackages).data[i].ItemNum);
-                    SoftwareList.Items.Add(GettingElements(SwPackages).data[i].SMN);
+                    if (items[i] == Drives_List[j].Drive_Name) Drives_List[j].Format_MyDrive();
+                }
+
+            }
+            MainWorker.RunWorkerAsync();
+        }
+
+        private void MainWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            while (true)
+            {
+                bool output_status = true;
+                for (int j = 0; j < Drives_List.Count; j++)
+                {
+                    output_status = output_status && !(Drives_List[j].Worker_IsBusy());
+                }
+                if (output_status) break;
+
+
+                if (MainWorker.CancellationPending)
+                {
+                    break;
                 }
             }
         }
-        */
-        private void copyBtn_Click(object sender, EventArgs e)
+
+        private void MainWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            MessageBox.Show("step1");
-            string[] folders = new string[4] { @"C:\testsf", @"C:\testsf2", @"C:\testsf3", @"C:\Full Installation\storage card" };  
-
-        Drives_List[0].Copy_Files_Multiple_Sources(folders,Drives_List[0].Drive_Name);
-           // Drives_List[0].Copy_File(@"C:\testsf", Drives_List[0].Drive_Name);
-
+            RefreshBtn.Enabled = true;
+            copyBtn.Enabled = true;
+            EraseBtn.Enabled = true;
+            string Message_string = "";
+            for (int j = 0; j < Drives_List.Count; j++)
+            {
+                if(Drives_List[j].Worker_Status() == 4 
+                    || Drives_List[j].Worker_Status() == 5 
+                    || Drives_List[j].Worker_Status() == 6
+                    || Drives_List[j].Worker_Status() == 7)
+                {
+                    if (Drives_List[j].Worker_Status() == 4)
+                        Message_string = Message_string + Drives_List[j].Drive_Name + "Has Formatting Error\n";
+                    else if (Drives_List[j].Worker_Status() == 6)
+                        Message_string = Message_string + Drives_List[j].Drive_Name + "is not connected!\n";
+                    else if (Drives_List[j].Worker_Status() == 5)
+                        Message_string = Message_string + Drives_List[j].Drive_Name + "has an error with hashing. Please update the Hashes file.\n";
+                    else if (Drives_List[j].Worker_Status() == 7)
+                        Message_string = Message_string + Drives_List[j].Drive_Name + "has corrupted copied files\n";
+                }
+            }
+            MessageBox.Show(Message_string, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
-
-       
     }
-    }
+}
 

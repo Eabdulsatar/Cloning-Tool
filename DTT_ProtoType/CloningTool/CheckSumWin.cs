@@ -14,15 +14,13 @@ namespace CloningTool
 {
     public partial class CheckSumWin : Form
     {
-        CloningTool CT = new CloningTool();
-
+        CloningTool cloningTool = new CloningTool();
         public CheckSumWin()
         {
             InitializeComponent();
-            version.Text = "Version " + CT.Version;
+            version.Text = "Version " + cloningTool.Version;
 
         }
-        /*
         private void Browse_Click(object sender, EventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -33,18 +31,15 @@ namespace CloningTool
                 string file = openFileDialog.FileName;
                 try
                 {
+                    CheckSumTools checkSumTool = new CheckSumTools(file);
                     string text = File.ReadAllText(file);
-                    hashCode = CT.Hash(file);
+                    hashCode = checkSumTool.CheckSum_From_File(file);
                 }
                 catch (IOException)
                 {
                 }
                 textBox1.Text = hashCode;
             }
-        }
-        */
-        private void Browse_Click(object sender, EventArgs e)
-        {
         }
     }
 }
