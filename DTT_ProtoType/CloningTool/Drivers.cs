@@ -210,14 +210,10 @@ namespace CloningTool
 
                     watcher.Completed += (sender, args) =>
                     {
-                       // MessageBox.Show("USB format completed " + args.Status);
-                        
                         completed = true;
                     };
                     watcher.Progress += (sender, args) =>
                     {
-                        //MessageBox.Show("USB format in progress " + args.Current);
-                
                     };
 
                     vi.InvokeMethod(watcher, "Format", new object[] { fileSystem, quickFormat, clusterSize, label, enableCompression });
@@ -336,7 +332,6 @@ namespace CloningTool
                     Image_Control(Image_Control_Message.COMPLETE);
                     break;
                 case Message_Status.ERROR_FORMATTING:
-                   // MessageBox.Show("Error Formatting Drive", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     Image_Control(Image_Control_Message.ERROR);
                     break;
                 case Message_Status.ERROR_MISSING_DRIVE:
@@ -344,11 +339,9 @@ namespace CloningTool
                     Image_Control(Image_Control_Message.ERROR);
                     break;
                 case Message_Status.ERROR_HASHING:
-                    //MessageBox.Show("Please update the Hashes file.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     Image_Control(Image_Control_Message.ERROR);
                     break;
                 case Message_Status.ERROR_CORRUPTED:
-                   // MessageBox.Show("Please check the SD card connection.\nFiles was not being copied properly. ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     Image_Control(Image_Control_Message.ERROR);
                     break;
             }

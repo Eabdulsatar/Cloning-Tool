@@ -36,7 +36,6 @@ namespace CloningTool
             public string Item_Number, SMN_Number, Description;
         }
 
-
         enum Message_Status : int
         {
             IDEL = 0,
@@ -48,8 +47,6 @@ namespace CloningTool
             ERROR_MISSING_DRIVE = 6,
             ERROR_CORRUPTED = 7
         }
-
-
 
         public CloningTool()
         {
@@ -197,7 +194,6 @@ namespace CloningTool
             DriversList.Items.Clear();
             SelectAll.Checked = false;
             Drivers_Function();
-
         }
 
         private void SelectAll_CheckedChanged(object sender, EventArgs e)
@@ -239,13 +235,12 @@ namespace CloningTool
             {
                 for (int i = 0; i < j; i++)
                 {
-
                     Drives_List.Add(new Drivers(drivers_read_list[i].drive_information.Name.ToString(), i, this));
                 }
             }
-
             return (driversName);
         }
+
         private void CopyBtn_Click(object sender, EventArgs e)
         {
             var items = DriversList.CheckedItems.OfType<string>().ToArray();
@@ -268,9 +263,7 @@ namespace CloningTool
                     {
                         if (items[i] == Drives_List[j].Drive_Name)
                         {
-
                             Drives_List[j].Copy_Files_Multiple_Sources(FoldersPath);
-
                         }
                     }
                 }
@@ -354,6 +347,7 @@ namespace CloningTool
             copyBtn.Enabled = true;
             EraseBtn.Enabled = true;
             string Message_string = "";
+
             for (int j = 0; j < Drives_List.Count; j++)
             {
                 if(Drives_List[j].Worker_Status() == 4 
@@ -370,8 +364,13 @@ namespace CloningTool
                     else if (Drives_List[j].Worker_Status() == 7)
                         Message_string = Message_string + Drives_List[j].Drive_Name + "has corrupted copied files\n";
                 }
+                
             }
-            MessageBox.Show(Message_string, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            if (!(Message_string == ""))
+            {
+                MessageBox.Show(Message_string, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        
         }
     }
 }
