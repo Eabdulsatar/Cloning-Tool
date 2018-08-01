@@ -220,7 +220,6 @@ namespace CloningTool
 
                     while (!completed)
                     { /*System.Threading.Thread.Sleep(1000);*/
-                       
                     }
                 }
                 catch
