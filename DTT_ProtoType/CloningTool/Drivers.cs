@@ -23,7 +23,6 @@ namespace CloningTool
         private BackgroundWorker Drive_Worker;
         public string Drive_Name;
         private int Drive_Order;
-        private string HashesFile = @"Hashes.ini";
         CloningTool Main_Form;
         CheckSumTools CheckSumTools;
 
@@ -104,6 +103,7 @@ namespace CloningTool
 
         public Drivers (string drive_name, int drive_order, CloningTool Parent)
         {
+
             Drive_Worker = new BackgroundWorker();
             Drive_Name = drive_name;
             Drive_Order = drive_order;
@@ -118,7 +118,7 @@ namespace CloningTool
             Main_Form.Controls.Add(Error_pic);
             Main_Form.Controls.Add(Loading_Status);
 
-            CheckSumTools = new CheckSumTools(HashesFile);
+            CheckSumTools = new CheckSumTools(Main_Form.HashesFile);
 
             this.Drive_Worker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.Drive_Worker_DoWork);
             this.Drive_Worker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.Drive_Worker_ProgressChanged);
@@ -235,7 +235,8 @@ namespace CloningTool
 
         private void Copying_Function(string [] SourceFolders, string Destination)
         {
-            var File_Extentions = new List<string> { ".htm", ".lnk", ".cab", ".CAB", ".sig", ".bmp", ".bin", ".lst", ".exe" };
+
+            var File_Extentions = new List<string> {".lnk", ".cab", ".CAB", ".sig", ".bmp", ".bin", ".lst", ".exe",".upg"};
             IEnumerable<string> SWFiles;
             Drive_Worker.ReportProgress(0, Message_Status.COPYING);
             bool errorStatus_temp = true;
@@ -273,7 +274,6 @@ namespace CloningTool
 
                     j++;
                 }
-                
                 if (!CheckSumTools.Check_Valid_CheckSum_Folders(Destination_Files, Source_Files))
                 {
                     Drive_Worker.ReportProgress(0, Message_Status.ERROR_CORRUPTED);
@@ -308,6 +308,7 @@ namespace CloningTool
 
             catch (IOException)
             {
+
                 Drive_Worker.ReportProgress(0, Message_Status.ERROR_MISSING_DRIVE);
                 e.Cancel = true;
             }
@@ -359,7 +360,6 @@ namespace CloningTool
             Complete_pic.Dispose();
             Error_pic.Dispose();
             Loading_Status.Dispose();
-            CheckSumTools.Dispose();
         }
 
 

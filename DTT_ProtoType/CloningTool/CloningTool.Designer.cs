@@ -31,7 +31,6 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(CloningTool));
             this.DescSW = new System.Windows.Forms.Label();
             this.copyBtn = new System.Windows.Forms.Button();
-            this.DriversListAll = new System.Windows.Forms.GroupBox();
             this.SelectAll = new System.Windows.Forms.CheckBox();
             this.Title = new System.Windows.Forms.Label();
             this.DriversList = new System.Windows.Forms.CheckedListBox();
@@ -43,6 +42,7 @@
             this.SMNRd = new System.Windows.Forms.RadioButton();
             this.RefreshBtn = new System.Windows.Forms.Button();
             this.MainWorker = new System.ComponentModel.BackgroundWorker();
+            this.DriversListAll = new System.Windows.Forms.GroupBox();
             this.DriversListAll.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -59,6 +59,7 @@
             // 
             // copyBtn
             // 
+            this.copyBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.copyBtn.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("copyBtn.BackgroundImage")));
             this.copyBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.copyBtn.FlatAppearance.BorderSize = 0;
@@ -71,17 +72,6 @@
             this.copyBtn.Text = "Copy";
             this.copyBtn.UseVisualStyleBackColor = true;
             this.copyBtn.Click += new System.EventHandler(this.CopyBtn_Click);
-            // 
-            // DriversListAll
-            // 
-            this.DriversListAll.BackColor = System.Drawing.Color.Transparent;
-            this.DriversListAll.Controls.Add(this.SelectAll);
-            this.DriversListAll.Location = new System.Drawing.Point(151, 137);
-            this.DriversListAll.Name = "DriversListAll";
-            this.DriversListAll.Size = new System.Drawing.Size(277, 43);
-            this.DriversListAll.TabIndex = 24;
-            this.DriversListAll.TabStop = false;
-            this.DriversListAll.Text = "Drivers";
             // 
             // SelectAll
             // 
@@ -96,6 +86,7 @@
             // 
             // Title
             // 
+            this.Title.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.Title.AutoSize = true;
             this.Title.BackColor = System.Drawing.Color.Transparent;
             this.Title.Font = new System.Drawing.Font("Lucida Calligraphy", 16F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -109,6 +100,9 @@
             // 
             // DriversList
             // 
+            this.DriversList.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.DriversList.BackColor = System.Drawing.Color.White;
             this.DriversList.CheckOnClick = true;
             this.DriversList.FormattingEnabled = true;
@@ -130,6 +124,7 @@
             // 
             // version
             // 
+            this.version.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.version.AutoSize = true;
             this.version.BackColor = System.Drawing.Color.Transparent;
             this.version.Location = new System.Drawing.Point(0, 452);
@@ -140,6 +135,7 @@
             // 
             // EraseBtn
             // 
+            this.EraseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.EraseBtn.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("EraseBtn.BackgroundImage")));
             this.EraseBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.EraseBtn.FlatAppearance.BorderSize = 0;
@@ -155,16 +151,17 @@
             // 
             // CheckSum_Btn
             // 
+            this.CheckSum_Btn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.CheckSum_Btn.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("CheckSum_Btn.BackgroundImage")));
             this.CheckSum_Btn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.CheckSum_Btn.FlatAppearance.BorderSize = 0;
             this.CheckSum_Btn.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.CheckSum_Btn.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.CheckSum_Btn.Location = new System.Drawing.Point(21, 413);
+            this.CheckSum_Btn.Image = ((System.Drawing.Image)(resources.GetObject("CheckSum_Btn.Image")));
+            this.CheckSum_Btn.Location = new System.Drawing.Point(565, 12);
             this.CheckSum_Btn.Name = "CheckSum_Btn";
-            this.CheckSum_Btn.Size = new System.Drawing.Size(108, 23);
+            this.CheckSum_Btn.Size = new System.Drawing.Size(25, 25);
             this.CheckSum_Btn.TabIndex = 37;
-            this.CheckSum_Btn.Text = "Check Sum";
             this.CheckSum_Btn.UseVisualStyleBackColor = true;
             this.CheckSum_Btn.Click += new System.EventHandler(this.CheckSum_Btn_Click);
             // 
@@ -176,7 +173,6 @@
             this.ItemNumRd.Name = "ItemNumRd";
             this.ItemNumRd.Size = new System.Drawing.Size(85, 17);
             this.ItemNumRd.TabIndex = 38;
-            this.ItemNumRd.TabStop = true;
             this.ItemNumRd.Text = "Item Number";
             this.ItemNumRd.UseVisualStyleBackColor = false;
             this.ItemNumRd.CheckedChanged += new System.EventHandler(this.ItemNumRd_CheckedChanged);
@@ -189,19 +185,19 @@
             this.SMNRd.Name = "SMNRd";
             this.SMNRd.Size = new System.Drawing.Size(49, 17);
             this.SMNRd.TabIndex = 39;
-            this.SMNRd.TabStop = true;
             this.SMNRd.Text = "SMN";
             this.SMNRd.UseVisualStyleBackColor = false;
             this.SMNRd.CheckedChanged += new System.EventHandler(this.SMNRd_CheckedChanged);
             // 
             // RefreshBtn
             // 
+            this.RefreshBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.RefreshBtn.BackColor = System.Drawing.Color.Transparent;
             this.RefreshBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.RefreshBtn.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.RefreshBtn.Font = new System.Drawing.Font("Wingdings 3", 12F, System.Drawing.FontStyle.Bold);
             this.RefreshBtn.ForeColor = System.Drawing.SystemColors.WindowText;
-            this.RefreshBtn.Location = new System.Drawing.Point(434, 152);
+            this.RefreshBtn.Location = new System.Drawing.Point(434, 151);
             this.RefreshBtn.Name = "RefreshBtn";
             this.RefreshBtn.Size = new System.Drawing.Size(25, 25);
             this.RefreshBtn.TabIndex = 21;
@@ -214,11 +210,25 @@
             this.MainWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.MainWorker_DoWork);
             this.MainWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.MainWorker_RunWorkerCompleted);
             // 
+            // DriversListAll
+            // 
+            this.DriversListAll.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.DriversListAll.BackColor = System.Drawing.Color.Transparent;
+            this.DriversListAll.Controls.Add(this.SelectAll);
+            this.DriversListAll.Location = new System.Drawing.Point(151, 137);
+            this.DriversListAll.Name = "DriversListAll";
+            this.DriversListAll.Size = new System.Drawing.Size(277, 43);
+            this.DriversListAll.TabIndex = 24;
+            this.DriversListAll.TabStop = false;
+            this.DriversListAll.Text = "Drivers";
+            // 
             // CloningTool
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
+            this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(599, 468);
             this.Controls.Add(this.RefreshBtn);
             this.Controls.Add(this.SMNRd);
@@ -247,7 +257,6 @@
 
         private System.Windows.Forms.Label DescSW;
         private System.Windows.Forms.Button copyBtn;
-        private System.Windows.Forms.GroupBox DriversListAll;
         private System.Windows.Forms.CheckBox SelectAll;
         private System.Windows.Forms.Label Title;
         private System.Windows.Forms.CheckedListBox DriversList;
@@ -259,6 +268,7 @@
         private System.Windows.Forms.RadioButton SMNRd;
         private System.Windows.Forms.Button RefreshBtn;
         private System.ComponentModel.BackgroundWorker MainWorker;
+        private System.Windows.Forms.GroupBox DriversListAll;
     }
 }
 

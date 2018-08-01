@@ -15,11 +15,12 @@ namespace CloningTool
     {
         DriveInfo[] allDrives = DriveInfo.GetDrives();
         public string Version = "1.0";
-        private string SwPackages = @"SwPackages.ini";
-        private string HashesFile = @"Hashes.ini";
+        public string SwPackages = @"SwPackages.ini";
+        public string HashesFile = @"Hashes.ini";
         private List<Drivers> Drives_List = new List<Drivers>();
         private string[] FoldersPath;
         public string FromDrivers = "";
+      //  CheckSumWin CheckSumWin;
         public struct Elements
         {
             public string ItemNum, SMN, Desc, path;
@@ -76,13 +77,6 @@ namespace CloningTool
             version.Text = "Version " + Version;
         }
 
-        private void Displaying_Msgs(string[] msgs)
-        {
-            string toDisplay = string.Join(Environment.NewLine, msgs);
-            MessageBox.Show(toDisplay);
-        }
-
-
         private void SoftwareList_SelectedIndexChanged_1(object sender, EventArgs e)
         {
             Unique_elements element;
@@ -96,10 +90,13 @@ namespace CloningTool
                 FoldersPath = element.folders;
             }
         }
-
+        
         public DataElements GettingElements(String SWfile)
         {
             var text = File.ReadAllText(SWfile);
+            if (text.EndsWith(Environment.NewLine)) File.WriteAllText(SWfile, text.TrimEnd(Environment.NewLine.ToCharArray())); // Removes ALL CR/LF from the end!
+
+            text = File.ReadAllText(SWfile);
             string[] enter = text.Split('\n');
             int number_of_elements = enter.Length;
             DataElements values = new DataElements();
@@ -108,26 +105,34 @@ namespace CloningTool
 
             for (int i = 0; i < values.lengthOfData; i++)
             {
-                string[] element = enter[i].Split('\t');
-                values.data[i].ItemNum = element[0];
-                values.data[i].SMN = element[1];
-                values.data[i].Desc = element[2];
-                values.data[i].path = element[3];
+                try
+                {
+                    string[] element = enter[i].Split('\t');
+                    values.data[i].ItemNum = element[0];
+                    values.data[i].SMN = element[1];
+                    values.data[i].Desc = element[2];
+                    values.data[i].path = element[3];
 
+                }
+               catch (IndexOutOfRangeException)
+                {
+                    MessageBox.Show("Missing content in SwFile", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Environment.Exit(0);
+                }
 
+                /*
                 if (string.IsNullOrEmpty(values.data[i].ItemNum)
                     || string.IsNullOrEmpty(values.data[i].SMN)
                     || string.IsNullOrEmpty(values.data[i].Desc)
                     || string.IsNullOrEmpty(values.data[i].path))
                 {
-                    MessageBox.Show("Missing content in SwFile", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    Environment.Exit(0);
-                }
+                   
+                }*/
             }
             return values;
         }
 
-        private string[] Remove_Dupicate(bool Is_SMN)
+        public string[] Remove_Dupicate(bool Is_SMN)
         {
             string[] temp = new string[GettingElements(SwPackages).lengthOfData];
 
@@ -253,6 +258,7 @@ namespace CloningTool
             }
             else
             {
+
                 RefreshBtn.Enabled = false;
                 copyBtn.Enabled = false;
                 EraseBtn.Enabled = false;
@@ -263,6 +269,7 @@ namespace CloningTool
                     {
                         if (items[i] == Drives_List[j].Drive_Name)
                         {
+
                             Drives_List[j].Copy_Files_Multiple_Sources(FoldersPath);
                         }
                     }
@@ -297,8 +304,9 @@ namespace CloningTool
 
         private void CheckSum_Btn_Click(object sender, EventArgs e)
         {
-            CheckSumWin check = new CheckSumWin();
-            check.Show();
+            CheckSumWin CheckSumWin = new CheckSumWin(this);
+
+            CheckSumWin.Show();
         }
 
         private void EraseBtn_Click(object sender, EventArgs e)
@@ -364,13 +372,12 @@ namespace CloningTool
                     else if (Drives_List[j].Worker_Status() == 7)
                         Message_string = Message_string + Drives_List[j].Drive_Name + "has corrupted copied files\n";
                 }
-                
             }
+
             if (!(Message_string == ""))
             {
                 MessageBox.Show(Message_string, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        
         }
     }
 }

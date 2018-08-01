@@ -10,20 +10,43 @@ using System.Windows.Forms;
 namespace CloningTool
 {
 
-    class CheckSumTools : IDisposable
+    public class CheckSumTools : IDisposable
     {
         private string CheckSumFile;
+        public struct HashElements
+        {
+            public string path, hashCode;
+        }
+        public struct HashFileElements
+        {
+            public int lengthOfData;
+            public HashElements[] data;
+        }
+
         public CheckSumTools(string i_CheckSumFile)
         {
             CheckSumFile = i_CheckSumFile;
         }
 
 
-        private string [] CheckSumArray (string CheckSumFile)
+/*        private string [] CheckSumArray (string CheckSumFile)
         { 
             // this function returns all the checksum list from the INI file
-            string CheckSum_Text = File.ReadAllText(CheckSumFile); ;
+            string CheckSum_Text = File.ReadAllText(CheckSumFile); 
             string[] hashCode = CheckSum_Text.Split(new[] { "\r\n", "\r", "\n" },StringSplitOptions.None);
+            return (hashCode);
+        }
+*/
+        private string[] CheckSumArray()
+        {
+           var temp= GettingHashFileElements();
+            
+            // this function returns all the checksum list from the INI file
+            string[] hashCode = new string[temp.lengthOfData];
+            for (int i = 0; i < temp.lengthOfData ; i++)
+            {
+                hashCode[i]= temp.data[i].hashCode;
+            }
             return (hashCode);
         }
 
@@ -53,7 +76,6 @@ namespace CloningTool
             {
                 return msg;
             }
-            
         }
 
 
@@ -65,12 +87,14 @@ namespace CloningTool
             {
 
                 string File_CheckSum = CheckSum_From_File(file_path);
-                string[] Checksum_Array = CheckSumArray(CheckSumFile);
+                string[] Checksum_Array = CheckSumArray();
 
                 foreach (string CheckSum_string in Checksum_Array)
                 {
-
-                    if (File_CheckSum == CheckSum_string) Is_Valid_CheckSum = true;
+                    if (File_CheckSum == CheckSum_string)
+                    {
+                        Is_Valid_CheckSum = true;
+                    }
                 }
 
                 return (Is_Valid_CheckSum);
@@ -85,7 +109,6 @@ namespace CloningTool
 
         public bool Check_Valid_CheckSum_Folders(string[] Files_A, string[] Files_B)
         {
-
             // this function checks if the two file list have exactly the same files 
             bool Is_Match = true;
 
@@ -113,6 +136,42 @@ namespace CloningTool
             return Is_Match;
         }
 
+        public HashFileElements GettingHashFileElements()
+        {
+            string HashFile = CheckSumFile;
+
+            var text = File.ReadAllText(HashFile);
+            if (text.EndsWith(Environment.NewLine)) File.WriteAllText(HashFile, text.TrimEnd(Environment.NewLine.ToCharArray())); // Removes ALL CR/LF from the end!
+
+            text = File.ReadAllText(HashFile);
+            string[] enter = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            int number_of_elements = enter.Length;
+            HashFileElements values = new HashFileElements();
+            values.lengthOfData = number_of_elements;
+            values.data = new HashElements[values.lengthOfData];
+
+            for (int i = 0; i < values.lengthOfData; i++)
+            {
+                try
+                {
+                    string[] element = enter[i].Split('\t');
+                    values.data[i].path = element[0];
+                    values.data[i].hashCode = element[1];
+                }
+                catch(IndexOutOfRangeException)
+                {
+                    MessageBox.Show("Missing content in Hashes File", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Environment.Exit(0);
+                }
+                
+               /* if (string.IsNullOrEmpty(values.data[i].path)
+                   || string.IsNullOrEmpty(values.data[i].hashCode))
+                {
+                    
+                }*/
+            }
+            return values;
+        }
         public void Dispose()
         {
         }
